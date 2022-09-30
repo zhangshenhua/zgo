@@ -1,0 +1,5 @@
+*
+!.gitignore
+!init.sql
+!GO.js
+!package.json
