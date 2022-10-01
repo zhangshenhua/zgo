@@ -3,7 +3,7 @@
 drop TABLE IF EXISTS ZI;
 
 create table ZI(
-    rowid INTEGER PRIMARY KEY autoincrement,
+    id INTEGER PRIMARY KEY autoincrement,
     x INT2 check(x >= -10000 and x <= 10000),
     y INT2 check(y >= -10000 and y <= 10000),
     bid UNSIGNED INT NOT NULL,
@@ -20,7 +20,7 @@ update sqlite_sequence set seq = 0 where name = 'ZI';
 -- 最后落的子a
 DROP VIEW IF EXISTS VIEW_LAST_ZI;
 CREATE VIEW VIEW_LAST_ZI AS
-    select * from ZI ORDER by rowid DESC LIMIT 1
+    select * from ZI ORDER by id DESC LIMIT 1
     ;
 
 
