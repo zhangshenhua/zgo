@@ -186,4 +186,3 @@ SELECT * from ZI;
 DELETE FROM ZI;
 update sqlite_sequence set seq = 0 where name = 'ZI';
 
-select * from (1 as x, 2 as y, 3 as z) as A
