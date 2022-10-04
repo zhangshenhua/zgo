@@ -1,4 +1,4 @@
-**
+*
 !.gitignore
 !LICENCE
 !README
@@ -6,4 +6,5 @@
 !main.go 
 !main.js
 !index.html
-!/tools/*
+!tools/
+!tools/*
