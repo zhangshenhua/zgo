@@ -185,5 +185,5 @@ select * from sqlite_sequence;
 
 SELECT * from ZI;
 
--- DELETE FROM ZI;
--- update sqlite_sequence set seq = 0 where name = 'ZI';
+DELETE FROM ZI;
+update sqlite_sequence set seq = 0 where name = 'ZI';
