@@ -19,7 +19,15 @@
 const sqlite3 = require('sqlite3');
 sqlite3.verbose()
 
-var db = new sqlite3.Database('mygo.sqlite.db')
+var db = new sqlite3.Database('mygo.sqlite')
+
+
+db.all("select sqlite_version();",[],
+    function(err, res) {
+        console.log(JSON.stringify(res))
+    }
+
+)
 
 //db.run("")
 
@@ -52,7 +60,7 @@ db.all("select * from ZI",[],
 console.log(JSON.stringify(res) )
 
 
-
+/*
 
 var sqlite3 = require('sqlite3').verbose();
 var db = new sqlite3.Database('abcd');
@@ -75,4 +83,4 @@ db.serialize(function() {
 
 db.close();
 
-
+*/

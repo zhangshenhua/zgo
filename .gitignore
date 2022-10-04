@@ -1,6 +1,7 @@
 *
+!README
 !.gitignore
 !init.sql
-!GO.js
-!package.json
-!GO.rkt
+!main.go 
+!main.js
+!index.html

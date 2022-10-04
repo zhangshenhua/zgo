@@ -1,0 +1,30 @@
+you should have sql
+
+how to test
+-----------
+
+    # install go first
+    go mod init zgo
+    go mod tidy # maybe you can skip this
+    go build 
+    ./zgo -dbfile zi.db
+
+what to do next
+---------------
+
+change index.html (js-go will help you)
+
+api
+---
+
+1. /testpage
+
+the index.html
+
+2. /doit
+
+post a json {x:1,y:1,uid:1,bid:1}
+
+3. /getall
+
+get all zi

@@ -63,6 +63,40 @@ CREATE VIEW VIEV_LAST_RELATED_ENEMY_BLOCKS AS
     where  ADJ.uid <> A.uid
     ;
 
+-- 与a利益相关的块的各块的气数
+DROP VIEW IF EXISTS VIEW_RELATED_BLOCKS_QISHU;
+CREATE VIEW VIEW_RELATED_BLOCKS_QISHU AS
+    WITH
+        XY_IN_B(uid, bid, x, y) as ( -- 相关敌块中所有子的坐标
+            select ZI.uid, ZI.bid, ZI.x, ZI.y 
+            FROM ZI JOIN VIEW_LAST_RELATED_BLOCKS as B ON ZI.bid = B.bid
+        ),
+        NEIGHBORS_B(uid, bid, x, y) as (
+            SELECT uid, bid, x, y-1 FROM XY_IN_B 
+            UNION
+            SELECT uid, bid, x, y+1 FROM XY_IN_B
+            UNION
+            SELECT uid, bid, x-1, y FROM XY_IN_B
+            UNION
+            SELECT uid, bid, x+1, y FROM XY_IN_B
+        )
+        SELECT  -- R.uid, 
+                T1.uid, T1.bid, count(ZI.id) as QiShu
+        FROM    
+            -- VIEW_LAST_RELATED_BLOCKS L LEFT JOIN 
+            NEIGHBORS_B T1 
+            LEFT JOIN ZI
+            ON T1.bid = ZI.bid 
+                and NOT EXISTS (select 1 
+                                from ZI 
+                                where ZI.x = T1.x
+                                and ZI.y = T1.y)
+        GROUP BY T1.bid
+    ;
+
+ SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
+
+
 -- 落子之后发生的事情
 drop TRIGGER if EXISTS zi_insert_clear_trigger;
 CREATE TRIGGER zi_insert_clear_trigger
@@ -76,6 +110,8 @@ BEGIN
     where 
         ZI.bid in (select OWN.bid from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
     ;
+
+    
     -- 2.提走与a相邻的非己方的无气的块。(气是空位的集合)
     -- B <- {b| b in B_enemy, qi(b)={}}
     -- qi(b) = (  {(x-1,y)|(x,y) in b} 
@@ -83,75 +119,29 @@ BEGIN
     --         U {(x,-y)|(x,y) in b}
     --         U {(x,+y)|(x,y) in b} ) - ZI
     DELETE FROM ZI
-    where bid in (
-            SELECT B.bid
-            FROM VIEV_LAST_RELATED_ENEMY_BLOCKS as B 
-            WHERE NOT EXISTS (
-                WITH RECURSIVE
-                    XY_IN_B(x,y) as (
-                        select ZI.x, ZI.y 
-                        FROM ZI JOIN VIEV_LAST_RELATED_ENEMY_BLOCKS as B ON ZI.bid = B.bid
-                    ),
-                    NEIGHBORS_B(x,y) as (
-                        SELECT x, y-1 FROM XY_IN_B 
-                        UNION
-                        SELECT x, y+1 FROM XY_IN_B
-                        UNION
-                        SELECT x-1, y FROM XY_IN_B
-                        UNION
-                        SELECT x+1, y FROM XY_IN_B
-                    ),
-                    QI(x,y) as (
-                        SELECT N.x, N.y
-                        FROM ZI, NEIGHBORS_B as N
-                        WHERE NOT EXISTS (select 1 
-                                          from ZI 
-                                          where ZI.x = N.x
-                                            and ZI.y = N.y)
-                    )
-                select 1 from QI
-            )
-        )
+    where bid in ( -- 无气的敌块
+        SELECT  T1.bid
+        FROM    VIEW_RELATED_BLOCKS_QISHU T1,
+                VIEW_LAST_ZI T2
+        WHERE   T1.uid <> T2.uid    -- 非己方块
+            and T1.QiShu = 0 
+    )
     ;
-    -- 3.提走与a相邻的己方的无气的块。(气是空位的集合)
+    -- 3.提走与a相邻的无气的块。(气是空位的集合)
     -- B <- {b| b in B_own, qi(b)={}}
     -- qi(b) = (  {(x-1,y)|(x,y) in b} 
     --         U {(x+1,y)|(x,y) in b} 
     --         U {(x,-y)|(x,y) in b}
-    --         U {(x,+y)|(x,y) in b} ) - ZI
+    --         U {(x,+y)|(x,y) in b} ) - ZI 
     DELETE FROM ZI
-    where bid in (
-            SELECT B.bid
-            FROM VIEW_LAST_RELATED_OWN_BLOCKS as B 
-            WHERE NOT EXISTS (
-                WITH RECURSIVE
-                    XY_IN_B(x,y) as (
-                        select ZI.x, ZI.y 
-                        FROM ZI JOIN VIEW_LAST_RELATED_OWN_BLOCKS as B ON ZI.bid = B.bid
-                    ),
-                    NEIGHBORS_B(x,y) as (
-                        SELECT x, y-1 FROM XY_IN_B 
-                        UNION
-                        SELECT x, y+1 FROM XY_IN_B
-                        UNION
-                        SELECT x-1, y FROM XY_IN_B
-                        UNION
-                        SELECT x+1, y FROM XY_IN_B
-                    ),
-                    QI(x,y) as (
-                        SELECT N.x, N.y
-                        FROM ZI, NEIGHBORS_B as N
-                        WHERE NOT EXISTS (select 1 
-                                          from ZI 
-                                          where ZI.x = N.x
-                                            and ZI.y = N.y)
-                    )
-                select 1 from QI
-            )
-        )
-    ;
+    where bid in ( -- 无气的块
+        SELECT  T1.bid
+        FROM    VIEW_RELATED_BLOCKS_QISHU T1
+        WHERE   T1.QiShu = 0 
+    )
+    ;    
 END;
-  
+
 -- tests
 insert INTO ZI (x, y, bid, uid) SELECT 1, 0, seq+1, 0 from sqlite_sequence where  name='ZI';
 insert INTO ZI (x, y, bid, uid) SELECT 0, 1, seq+1, 0 from sqlite_sequence where  name='ZI';
@@ -176,13 +166,24 @@ insert INTO ZI (x, y, bid, uid) SELECT 1, 0, seq+1, 0 from sqlite_sequence where
 insert INTO ZI (x, y, bid, uid) SELECT 0, 1, seq+1, 0 from sqlite_sequence where  name='ZI';
 insert INTO ZI (x, y, bid, uid) SELECT -1, 0, seq+1, 0 from sqlite_sequence where  name='ZI';
 insert INTO ZI (x, y, bid, uid) SELECT 0, -1, seq+1, 0 from sqlite_sequence where  name='ZI';
+SELECT * from ZI;
+DELETE FROM ZI;
+update sqlite_sequence set seq = 0 where name = 'ZI';
 
+-- tests DaJie
+insert INTO ZI (x, y, bid, uid) SELECT  9,  8, seq+1, 1 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  8,  9, seq+1, 1 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  9,  10, seq+1, 1 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  10,  8, seq+1, 2 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  11,  9, seq+1, 2 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  10,  10, seq+1, 2 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  9,  9, seq+1, 2 from sqlite_sequence where  name='ZI';
+insert INTO ZI (x, y, bid, uid) SELECT  10,  9, seq+1, 1 from sqlite_sequence where  name='ZI';
 
 
 select * from sqlite_sequence;
 
 SELECT * from ZI;
 
-DELETE FROM ZI;
-update sqlite_sequence set seq = 0 where name = 'ZI';
-
+-- DELETE FROM ZI;
+-- update sqlite_sequence set seq = 0 where name = 'ZI';
