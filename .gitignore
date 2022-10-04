@@ -1,6 +1,7 @@
 *
-!README
 !.gitignore
+!LICENCE
+!README
 !init.sql
 !main.go 
 !main.js
