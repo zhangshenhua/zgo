@@ -165,12 +165,13 @@ DROP VIEW IF EXISTS VIEW_LAST_GO_TIME;
 CREATE VIEW VIEW_LAST_GO_TIME AS
     SELECT value FROM ENV WHERE name = 'last_go_time'
 ;
-
+-- select * from VIEW_LAST_GO_TIME
 
 -- 距离最后落子过去几分钟
 DROP VIEW IF EXISTS VIEW_MINS_AGO;
 CREATE VIEW VIEW_MINS_AGO AS
-    SELECT strftime('%M', datetime(NOW.value)) - strftime('%M', datetime(T.value)) as value
+    SELECT  (strftime('%s', datetime(NOW.value)) 
+            - strftime('%s', datetime(T.value)))/60 as value
     FROM NOW, VIEW_LAST_GO_TIME T
 ;
 -- SELECT * FROM VIEW_MINS_AGO;
@@ -240,3 +241,4 @@ FROM (
     ;
 
 SELECT * FROM ENV;
+
