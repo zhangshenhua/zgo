@@ -28,7 +28,16 @@ function set_uid(u) {
     if (u < 0) {
         u = 0
     }
+    localStorage.setItem("color", u.toString(16))
     return uid = u
+}
+function checkUIDAutoSet() {
+    let c = localStorage.getItem("color")
+    if (c === null) {
+        c = set_uid()
+    } else {
+        set_uid(parseInt(c, 16))
+    }
 }
 var toI = function (i, j) {
     return i * boardSize + j
@@ -218,6 +227,7 @@ var statusBar = document.getElementById("statusBar")
 function init() {
     boardClear();
     refreshPan()
+    checkUIDAutoSet()
 }
 function step(timestamp) {
     ctx.save();
