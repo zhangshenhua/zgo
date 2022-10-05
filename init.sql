@@ -1,4 +1,4 @@
--- 在sqlite3中执行本文件
+-- 在sqlite3 v3.39.4中执行本文件
 
 drop TABLE IF EXISTS ZI;
 
