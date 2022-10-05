@@ -1,7 +1,6 @@
 -- 在sqlite3 v3.39.4中执行本文件
 
 drop TABLE IF EXISTS ZI;
-
 create table ZI(
     id INTEGER PRIMARY KEY autoincrement,
     x INT2 check(x >= -10000 and x <= 10000),
