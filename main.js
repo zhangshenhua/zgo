@@ -241,3 +241,8 @@ function step(timestamp) {
 }
 init();
 window.requestAnimationFrame(step);
+function refreshPanTime() {
+    setTimeout(refreshPanTime, 3000)
+    refreshPan()
+}
+refreshPanTime()
