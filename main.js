@@ -76,18 +76,18 @@ var drawLine = function (x1, y1, x2, y2) {
     ctx.stroke();
 }
 // drawLine(10, 10, 100, 100)
+// draw 2*n lines
 var drawLines = function (n) {
     var lastLine = (n - 1) * gridSize;
-    for (var i = 0; i < n; i++) {
+    for (var i = -n; i < n; i++) {
         var x = i * gridSize;
-        drawLine(x, 0, x, lastLine)
+        drawLine(x, -lastLine, x, lastLine)
     }
-    for (var i = 0; i < n; i++) {
+    for (var i = -n; i < n; i++) {
         var y = i * gridSize;
-        drawLine(0, y, lastLine, y)
+        drawLine(-lastLine, y, lastLine, y)
     }
 }
-// drawLines(19);
 var drawStar = function (x, y) {
     ctx.beginPath();
 
@@ -113,6 +113,8 @@ var drawStars = function () {
 }
 var drawPanel = function (n) {
     ctx.translate(beginPoint.x, beginPoint.y)
+    // maybe
+    n = parseInt(800 / gridSize)
     drawLines(n)
     drawStars()
 }
@@ -184,7 +186,6 @@ _C.addEventListener("mousemove", function (event) {
     var j = parseInt(y / gridSize);
     cursorPos.x = i; cursorPos.y = j;
     // console.log(cursorPos);
-    // console.log(findNeighbors(i,j))
 })
 function doNetReq(pos, cb) {
     pos.uid = uid
@@ -194,15 +195,10 @@ function doNetReq(pos, cb) {
     }).then(cb)
 }
 _C.addEventListener("click", function (event) {
-    // console.log("i,j", cursorPos.x, cursorPos.y)
-    if (cursorPos.x < boardSize && cursorPos.y < boardSize) {
-        // console.log("i,j", i, j)
+    console.log("doit", cursorPos.x, cursorPos.y, turn)
 
-        console.log("doit", cursorPos.x, cursorPos.y, turn)
-
-        makeMove(cursorPos, uid)
-        doNetReq(cursorPos, refreshPan)
-    }
+    makeMove(cursorPos, uid)
+    doNetReq(cursorPos, refreshPan)
 })
 function refreshPan(lst) {
     getPan(function (lst) {
@@ -233,10 +229,8 @@ function step(timestamp) {
     ctx.save();
     drawBackground();
     drawPanel(boardSize)
-    if (cursorPos.x < boardSize && cursorPos.y < boardSize) {
-        drawCursor(cursorPos.x, cursorPos.y)
-        statusBar.textContent = "(" + cursorPos.x + "," + cursorPos.y + ")"
-    }
+    drawCursor(cursorPos.x, cursorPos.y)
+    statusBar.textContent = "(" + cursorPos.x + "," + cursorPos.y + ")"
     // 画棋子
     for (let s of stones) {
         drawStone(s.x, s.y, s.uid)
