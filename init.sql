@@ -187,3 +187,29 @@ SELECT * from ZI;
 
 DELETE FROM ZI;
 update sqlite_sequence set seq = 0 where name = 'ZI';
+
+
+
+INSERT INTO ZI(x, y, bid, uid)
+SELECT 
+        POS.x, 
+        POS.y,
+        (SELECT seq+1 FROM sqlite_sequence where name = 'ZI'),
+        4294967040
+FROM (
+    WITH RECURSIVE
+        X(v) as (
+            SELECT * from generate_series(-1,19,1)
+        ),
+        Y(v) as (
+            SELECT * from generate_series(-1,19,1)
+        )   
+        SELECT  X.v as x, Y.v as y
+        FROM  X, Y      
+        where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
+    ) POS
+    ;
+
+
+
+

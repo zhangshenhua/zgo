@@ -12,7 +12,7 @@ var boardSize = 19;
 var uid = 0
 var cursorPos = { x: 0, y: 0 }
 var turn = 1; // 1 黑 or 2 白
-var stones = new Array(boardSize * boardSize)
+var stones = []
 // [sg] ; sg::={ color: color, stones: Map, qis: Map} ; Map::=[int:{x,y}]
 var stoneGroups = new Array();
 
@@ -33,24 +33,14 @@ function set_uid(u) {
 var toI = function (i, j) {
     return i * boardSize + j
 }
-var sget = function (i, j) {
-    return stones[i * boardSize + j]
-}
-var sset = function (i, j, color) {
-    stones[i * boardSize + j] = color
-}
 var boardClear = function () {
-    for (var i = 0; i < boardSize; i++) {
-        for (var j = 0; j < boardSize; j++) {
-            sset(i, j, -1)
-        }
-    }
-    stoneGroups = [];
+    stones = []
 }
 
 var makeMove = function (cursorPos, turn) {
     // 落子
-    sset(cursorPos.x, cursorPos.y, turn)
+    cursorPos.uid = turn
+    stones.push(cursorPos)
 }
 var isAllColor = function (lst, color) {
     for (let p of lst) {
@@ -198,23 +188,18 @@ _C.addEventListener("click", function (event) {
     // console.log("i,j", cursorPos.x, cursorPos.y)
     if (cursorPos.x < boardSize && cursorPos.y < boardSize) {
         // console.log("i,j", i, j)
-        if (sget(cursorPos.x, cursorPos.y) === -1) {
-            oldsgs = stoneGroups
 
-            console.log("doit", cursorPos.x, cursorPos.y, turn)
+        console.log("doit", cursorPos.x, cursorPos.y, turn)
 
-            makeMove(cursorPos, uid)
-            doNetReq(cursorPos, refreshPan)
-        }
+        makeMove(cursorPos, uid)
+        doNetReq(cursorPos, refreshPan)
     }
 })
-function refreshPan() {
+function refreshPan(lst) {
     getPan(function (lst) {
         console.log(lst)
         boardClear()
-        for (let st of lst) {
-            sset(st.x, st.y, st.uid)
-        }
+        stones = lst
     })
 }
 function getPan(cb) {
@@ -240,15 +225,11 @@ function step(timestamp) {
     drawPanel(boardSize)
     if (cursorPos.x < boardSize && cursorPos.y < boardSize) {
         drawCursor(cursorPos.x, cursorPos.y)
-        statusBar.textContent = "(" + cursorPos.x + "," + cursorPos.y + ") uid = 0x" + sget(cursorPos.x, cursorPos.y).toString(16)
+        statusBar.textContent = "(" + cursorPos.x + "," + cursorPos.y + ")"
     }
     // 画棋子
-    for (var i = 0; i < boardSize; i++) {
-        for (var j = 0; j < boardSize; j++) {
-            if (sget(i, j) !== -1) {
-                drawStone(i, j, sget(i, j))
-            }
-        }
+    for (let s of stones) {
+        drawStone(s.x, s.y, s.uid)
     }
 
     // 当前棋子颜色
