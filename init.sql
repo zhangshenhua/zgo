@@ -96,7 +96,7 @@ CREATE VIEW VIEW_RELATED_BLOCKS_QISHU AS
  SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
 
 
--- 落子之后发生的事情
+-- 落子之后发生的事情。为此系统的核心装置。
 drop TRIGGER if EXISTS zi_insert_clear_trigger;
 CREATE TRIGGER zi_insert_clear_trigger
 AFTER INSERT
