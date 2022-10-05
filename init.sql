@@ -1,4 +1,10 @@
 -- 在sqlite3 v3.39.4中执行本文件
+DROP VIEW IF EXISTS NOW;
+CREATE VIEW NOW AS
+    select datetime('now','localtime') as value
+;
+SELECT * FROM NOW;
+
 
 drop TABLE IF EXISTS ZI;
 create table ZI(
@@ -9,12 +15,21 @@ create table ZI(
     uid UNSIGNED INT NOT NULL ,
     Unique (x, y)
 );
-
-
 create unique INDEX index_zi_x_y on ZI (x,y);
-
 insert into sqlite_sequence VALUES ('ZI', 0); 
 update sqlite_sequence set seq = 0 where name = 'ZI';
+
+
+
+-- 存放系统参数用的表
+drop TABLE IF EXISTS ENV;
+create table ENV(
+    name    TEXT    PRIMARY KEY,
+    value   TEXT
+);
+INSERT INTO ENV VALUES('system_start_time', (SELECT value FROM NOW));
+INSERT INTO ENV(name) VALUES('last_go_time');
+
 
 -- 最后落的子a
 DROP VIEW IF EXISTS VIEW_LAST_ZI;
@@ -103,6 +118,9 @@ AFTER INSERT
 ON ZI
 FOR EACH ROW
 BEGIN
+    -- 0.更新last_go_time变量
+    UPDATE ENV SET value = (select value FROM NOW) WHERE name = 'last_go_time';
+
     -- 1.将a并入邻近的己方块。
     UPDATE ZI 
     SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
@@ -140,6 +158,22 @@ BEGIN
     )
     ;    
 END;
+
+
+-- 最后落子时间
+DROP VIEW IF EXISTS VIEW_LAST_GO_TIME;
+CREATE VIEW VIEW_LAST_GO_TIME AS
+    SELECT value FROM ENV WHERE name = 'last_go_time'
+;
+
+
+-- 距离最后落子过去几分钟
+DROP VIEW IF EXISTS VIEW_MINS_AGO;
+CREATE VIEW VIEW_MINS_AGO AS
+    SELECT strftime('%M', datetime(NOW.value)) - strftime('%M', datetime(T.value)) as value
+    FROM NOW, VIEW_LAST_GO_TIME T
+;
+-- SELECT * FROM VIEW_MINS_AGO;
 
 -- tests
 -- insert INTO ZI (x, y, bid, uid) SELECT 1, 0, seq+1, 0 from sqlite_sequence where  name='ZI';
@@ -205,6 +239,4 @@ FROM (
     ) POS
     ;
 
-
-
-
+SELECT * FROM ENV;
