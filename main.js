@@ -28,8 +28,7 @@ function set_uid(u) {
     if (u < 0) {
         u = 0
     }
-    uid = u % 0xffffff
-    return "0x" + uid.toString(16)
+    return uid = u
 }
 var toI = function (i, j) {
     return i * boardSize + j
@@ -246,7 +245,7 @@ function step(timestamp) {
     // 画棋子
     for (var i = 0; i < boardSize; i++) {
         for (var j = 0; j < boardSize; j++) {
-            if (sget(i, j)!==-1) {
+            if (sget(i, j) !== -1) {
                 drawStone(i, j, sget(i, j))
             }
         }
