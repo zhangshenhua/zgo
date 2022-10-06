@@ -1,0 +1,4 @@
+DELETE FROM ZI
+WHERE (ZI.x, ZI.y) in (
+    SELECT * FROM VIEW_STD_AREA
+    );
