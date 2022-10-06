@@ -2,19 +2,18 @@ var _C = document.getElementById("C");
 const ctx = _C.getContext('2d');
 
 // 配置
-var beginPoint = { x: 20, y: 20 };
+var beginPoint = { x: 0, y: 0 };
 var gridSize = 25;
 var stoneSize = 10;
 var boardSize = 19;
-// var colorTable = [
+var width = 800,
+    height = 600;
 
 // 全局变量
 var uid = 0
 var cursorPos = { x: 0, y: 0 }
 var turn = 1; // 1 黑 or 2 白
 var stones = []
-// [sg] ; sg::={ color: color, stones: Map, qis: Map} ; Map::=[int:{x,y}]
-var stoneGroups = new Array();
 
 // 各种函数
 function get_uid() {
@@ -75,17 +74,13 @@ var drawLine = function (x1, y1, x2, y2) {
     ctx.closePath();
     ctx.stroke();
 }
-// drawLine(10, 10, 100, 100)
-// draw 2*n lines
-var drawLines = function (n) {
-    var lastLine = (n - 1) * gridSize;
-    for (var i = -n; i < n; i++) {
-        var x = i * gridSize;
-        drawLine(x, -lastLine, x, lastLine)
+// draw in rect
+var drawLines = function (x1, y1, x2, y2) {
+    for (var x = gridSize * (parseInt(x1 / gridSize) - 1); x <= x2; x += gridSize) {
+        drawLine(x, y1, x, y2)
     }
-    for (var i = -n; i < n; i++) {
-        var y = i * gridSize;
-        drawLine(-lastLine, y, lastLine, y)
+    for (var y = gridSize * (parseInt(y1 / gridSize) - 1); y <= y2; y += gridSize) {
+        drawLine(x1, y, x2, y)
     }
 }
 var drawStar = function (x, y) {
@@ -112,10 +107,10 @@ var drawStars = function () {
     }
 }
 var drawPanel = function (n) {
-    ctx.translate(beginPoint.x, beginPoint.y)
-    // maybe
-    n = parseInt(800 / gridSize)
-    drawLines(n)
+    var x1 = -beginPoint.x, x2 = -beginPoint.x + width,
+        y1 = -beginPoint.y, y2 = -beginPoint.y + height;
+    // console.log('draw in ', x1, y1,x2,y2)
+    drawLines(x1, y1, x2, y2)
     drawStars()
 }
 // drawPanel(boardSize)
@@ -182,8 +177,8 @@ _C.addEventListener("mousemove", function (event) {
     // console.log(event.x-beginPoint.x,event.y-beginPoint.y)
     var x = event.x - beginPoint.x;
     var y = event.y - beginPoint.y
-    var i = parseInt(x / gridSize);
-    var j = parseInt(y / gridSize);
+    var i = x >= 0 ? parseInt(x / gridSize) : parseInt(x / gridSize) - 1;
+    var j = y >= 0 ? parseInt(y / gridSize) : parseInt(y / gridSize) - 1;
     cursorPos.x = i; cursorPos.y = j;
     // console.log(cursorPos);
 })
@@ -200,9 +195,22 @@ _C.addEventListener("click", function (event) {
     makeMove(cursorPos, uid)
     doNetReq(cursorPos, refreshPan)
 })
+document.body.addEventListener("keypress", function (event) {
+    // console.log(event.key)
+    var step = 10;
+    if (event.key === "a") {
+        beginPoint.x += step;
+    } else if (event.key === "d") {
+        beginPoint.x -= step;
+    } else if (event.key === 'w') {
+        beginPoint.y += step;
+    } else if (event.key === 's') {
+        beginPoint.y -= step;
+    }
+})
 function refreshPan(lst) {
     getPan(function (lst) {
-        console.log(lst)
+        // console.log(lst)
         boardClear()
         stones = lst
     })
@@ -226,9 +234,11 @@ function init() {
     checkUIDAutoSet()
 }
 function step(timestamp) {
-    ctx.save();
     drawBackground();
-    drawPanel(boardSize)
+    // console.log('save')
+    ctx.save();
+    ctx.translate(beginPoint.x, beginPoint.y)
+    drawPanel()
     drawCursor(cursorPos.x, cursorPos.y)
     statusBar.textContent = "(" + cursorPos.x + "," + cursorPos.y + ")"
     // 画棋子
@@ -238,8 +248,8 @@ function step(timestamp) {
 
     // 当前棋子颜色
     // drawStoneAbs((boardSize + 1) * gridSize, 1 * gridSize, turn);
-
     ctx.restore()
+    // console.log('restore')
 
     window.requestAnimationFrame(step);
 }
