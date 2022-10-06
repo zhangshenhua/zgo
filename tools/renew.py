@@ -10,7 +10,7 @@ mins = c.execute("SELECT * from view_mins_ago").fetchall()[0][0]
 
 print(mins)
 
-if mins >= 60:
+if mins >= 20:
     # c.execute(
     #     '''
     #     DELETE FROM ZI
