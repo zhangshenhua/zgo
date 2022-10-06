@@ -14,15 +14,7 @@ if mins >= 60:
         '''
         DELETE FROM ZI
         WHERE (ZI.x, ZI.y) in (
-            WITH RECURSIVE
-                X(v) as (
-                    SELECT * from generate_series(0,18,1)
-                ),
-                Y(v) as (
-                    SELECT * from generate_series(0,18,1)
-                )   
-                SELECT  X.v as x, Y.v as y
-                FROM  X, Y  
+            SELECT * FROM VIEW_STD_AREA
             )
         '''
     )
