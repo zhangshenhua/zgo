@@ -1,4 +1,3 @@
-from operator import imod
 import sqlite3
 import os
 
