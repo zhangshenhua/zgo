@@ -1,19 +1,22 @@
-var _C = document.getElementById("C");
-const ctx = _C.getContext('2d');
 
 // 配置
 var beginPoint = { x: 0, y: 0 };
 var gridSize = 25;
 var stoneSize = 10;
 var boardSize = 19;
-var width = 800,
-    height = 600;
+var width = window.innerWidth,
+    height = window.innerWidth;
 
 // 全局变量
 var uid = 0
 var cursorPos = { x: 0, y: 0 }
 var turn = 1; // 1 黑 or 2 白
 var stones = []
+
+var _C = document.getElementById("C");
+_C.setAttribute("width", width)
+_C.setAttribute("height", width)
+const ctx = _C.getContext('2d');
 
 // 各种函数
 function get_uid() {
@@ -64,7 +67,7 @@ var isAllColor = function (lst, color) {
 var drawBackground = function () {
     ctx.save();
     ctx.fillStyle = "white"
-    ctx.fillRect(0, 0, 800, 600)
+    ctx.fillRect(0, 0, width, height)
     ctx.restore();
 }
 var drawLine = function (x1, y1, x2, y2) {
@@ -172,7 +175,23 @@ var drawStoneAbs = function (x, y, color) {
 
     ctx.restore();
 }
-
+var startDragX = 0, startDragY = 0
+_C.addEventListener("dragstart", function (event) {
+    console.log('dragstart')
+    startDragX = event.x; startDragY = event.y;
+})
+_C.addEventListener("dragend", function (event) {
+    console.log('dargend')
+    var x = event.x - startDragX, y = event.y - startDragY;
+    console.log(x, y)
+    beginPoint.x+=x;beginPoint.y+=y;
+})
+// _C.addEventListener("drag", function (event) {
+//     console.log('drag')
+//     var x = event.x - startDragX, y = event.y - startDragY;
+//     console.log(x, y)
+//     beginPoint = { x: -x, y: -y }
+// })
 _C.addEventListener("mousemove", function (event) {
     // console.log(event.x-beginPoint.x,event.y-beginPoint.y)
     var x = event.x - beginPoint.x;
