@@ -80,10 +80,12 @@ var drawLine = function (x1, y1, x2, y2) {
 }
 // draw in rect
 var drawLines = function (x1, y1, x2, y2) {
-    for (var x = gridSize * (parseInt(x1 / gridSize) - 1); x <= x2; x += gridSize) {
+    let x1_ = parseInt(x1 / gridSize) - 1
+    for (var x = gridSize * x1_; x <= x2; x += gridSize) {
         drawLine(x, y1, x, y2)
     }
-    for (var y = gridSize * (parseInt(y1 / gridSize) - 1); y <= y2; y += gridSize) {
+    let y1_ = parseInt(y1 / gridSize) - 1
+    for (var y = gridSize * y1_; y <= y2; y += gridSize) {
         drawLine(x1, y, x2, y)
     }
 }
@@ -223,13 +225,13 @@ function doNetReq(pos, cb) {
     })
 }
 _C.addEventListener("click", function (event) {
-    console.log("doit", cursorPos.x, cursorPos.y, turn)
     if (stones.has(keyXY(cursorPos))) {
         let u = stones.get(keyXY(cursorPos))
         set_uid(u)
     } else {
+        console.log("doit", cursorPos.x, cursorPos.y, turn)
         makeMove(cursorPos, uid)
-        doNetReq(cursorPos, refreshPan)
+        doNetReq(cursorPos, () => { })
     }
 })
 document.body.addEventListener("keypress", function (event) {
@@ -250,7 +252,7 @@ function reMakeStones(lst) {
         makeMove(a, a.uid)
     }
 }
-function refreshPan(lst) {
+function refreshPan(lst, x1, y1, x2, y2) {
     if (lst !== undefined) {
         boardClear()
         reMakeStones(lst)
@@ -258,11 +260,19 @@ function refreshPan(lst) {
         getPan(function (lst) {
             boardClear()
             reMakeStones(lst)
-        })
+        }, x1, y1, x2, y2)
     }
 }
-function getPan(cb) {
-    fetch("/getall").then(function (res) {
+function buildQuery(q) {
+    let a = []
+    for (let k in q) {
+        a.push(k + '=' + encodeURIComponent(q[k]))
+    }
+    return a.join('&')
+}
+function getPan(cb, x1, y1, x2, y2) {
+    let q = { x1, x2, y1, y2 }
+    fetch("/getall?" + buildQuery(q)).then(function (res) {
         return res.json()
     }).then(function (j) {
         cb(j)
@@ -274,9 +284,15 @@ function userColor(uid) {
     return '#' + s.padStart(6, "0")
 }
 var statusBar = document.getElementById("statusBar")
+function refreshPanZone() {
+    let x = -beginPoint.x, y = -beginPoint.y
+    let x1 = parseInt(x / gridSize) - 1, x2 = parseInt((x + width) / gridSize) + 1,
+        y1 = parseInt(y / gridSize) - 1, y2 = parseInt((y + height) / gridSize) + 1;
+    refreshPan(undefined, x1, y1, x2, y2)
+}
 function init() {
     boardClear();
-    refreshPan()
+    refreshPanZone();
     checkUIDAutoSet()
 }
 function step(timestamp) {
@@ -309,6 +325,6 @@ init();
 window.requestAnimationFrame(step);
 function refreshPanTime() {
     setTimeout(refreshPanTime, 3000)
-    refreshPan()
+    refreshPanZone();
 }
 refreshPanTime()

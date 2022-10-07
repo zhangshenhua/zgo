@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -27,8 +28,10 @@ func getNextBid(db *sql.Tx) (nb int) {
 	}
 	return nb + 1
 }
-func getAll(db *sql.DB) []gozi {
-	rows, err := db.Query("SELECT x,y,bid,uid from ZI")
+func getAll(db *sql.DB, x1, y1, x2, y2 int) []gozi {
+	rows, err := db.Query(`SELECT x,y,bid,uid from ZI 
+		where x>=?and x<=? and y>=? and y<=?`,
+		x1, x2, y1, y2)
 	if err != nil {
 		log.Fatal("db error in getall: ", err)
 	}
@@ -141,7 +144,57 @@ func main() {
 
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	http.HandleFunc("/getall", func(w http.ResponseWriter, r *http.Request) {
-		a := getAll(db)
+		err := r.ParseForm()
+		if err != nil {
+			writeResErr(w, err.Error())
+			return
+		}
+		f := r.Form
+		if !f.Has("x1") {
+			writeResErr(w, "no x1")
+			return
+		}
+		x1, err := strconv.Atoi(f.Get("x1"))
+		if err != nil {
+			writeResErr(w, "x1 not int")
+			return
+		}
+		if !f.Has("x2") {
+			writeResErr(w, "no x2")
+			return
+		}
+		x2, err := strconv.Atoi(f.Get("x2"))
+		if err != nil {
+			writeResErr(w, "x2 should be int")
+			return
+		}
+		if !f.Has("y1") {
+			writeResErr(w, "no y1")
+			return
+		}
+		y1, err := strconv.Atoi(f.Get("y1"))
+		if err != nil {
+			writeResErr(w, "y1 should be int")
+			return
+		}
+		if !f.Has("y2") {
+			writeResErr(w, "no y2")
+			return
+		}
+		y2, err := strconv.Atoi(f.Get("y2"))
+		if err != nil {
+			writeResErr(w, "y2 should be int")
+			return
+		}
+		if !(x1 < x2) {
+			writeResErr(w, "x1<x2")
+			return
+		}
+		if !(y1 < y2) {
+			writeResErr(w, "y1<y2")
+			return
+		}
+		a := getAll(db, x1, y1, x2, y2)
 		ab, err := json.Marshal(a)
 		if err != nil {
 			log.Fatal(err)
@@ -175,8 +228,8 @@ func main() {
 			writeResErr(w, err.Error())
 			return
 		}
-		a := getAll(db)
-		writeRes(w, a)
+		// a := getAll(db, -1000, 1000, -1000, 1000)
+		writeRes(w, []gozi{})
 	})
 	http.HandleFunc("/testpage", func(w http.ResponseWriter, r *http.Request) {
 		fr, err := os.Open("index.html")
