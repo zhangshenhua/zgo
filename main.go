@@ -16,7 +16,6 @@ import (
 type gozi struct {
 	X   int `json:"x"`
 	Y   int `json:"y"`
-	Bid int `json:"bid"`
 	Uid int `json:"uid"`
 }
 
@@ -37,7 +36,7 @@ func getAll(db *sql.DB) []gozi {
 	for rows.Next() {
 		var x, y, bid, uid int
 		rows.Scan(&x, &y, &bid, &uid)
-		a = append(a, gozi{x, y, bid, uid})
+		a = append(a, gozi{x, y, uid})
 	}
 	return a
 }
@@ -85,7 +84,6 @@ func getVal(tx *sql.Tx, q string, args ...interface{}) (a int) {
 	}
 	return a
 }
-
 func insertDoDB(tx *sql.Tx, data gozi) error {
 	nb := getNextBid(tx)
 	sql := fmt.Sprintf(`insert INTO ZI (x, y, bid, uid) values (?,?,?,?)`)
@@ -94,80 +92,32 @@ func insertDoDB(tx *sql.Tx, data gozi) error {
 		return err
 	}
 	return nil
-	// step 1
-	q := `UPDATE ZI 
-		SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
-		where ZI.bid in (select OWN.bid from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
-		;`
-	_, err = tx.Exec(q)
+}
+
+type gores struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data []gozi `json:"data"`
+}
+
+func makeRes(code int, msg string, data []gozi) []byte {
+	b, err := json.Marshal(gores{code, msg, data})
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	// step 2
-	d := 0
-	qun := `SELECT x, y-1 FROM (%s) 
-					UNION
-					SELECT x, y+1 FROM (%s)
-					UNION
-					SELECT x-1, y FROM (%s)
-					UNION
-					SELECT x+1, y FROM (%s)`
-	for _, bid := range getCol(tx, "select *from VIEV_LAST_RELATED_ENEMY_BLOCKS") {
-		q_ := "select x,y from zi where bid=?"
-		q = fmt.Sprintf(qun, q_, q_, q_, q_)
-		n := len(getXYs(tx, q, bid, bid, bid, bid))
-		q1 := fmt.Sprintf(`SELECT count(*) from zi where (x,y) in (%s)`, q)
-		nzi := getVal(tx, q1, bid, bid, bid, bid)
-		fmt.Printf("%d=?=%d\n", n, nzi)
-		if n == nzi {
-			_, err := tx.Exec("delete from zi where bid=?", bid)
-			if err != nil {
-				log.Printf("%s %v\n", "delete from zi where bid=?", bid)
-				return err
-			}
-			d += 1
-		}
+	return b
+}
+func writeResErr(w http.ResponseWriter, msg string) {
+	_, err := fmt.Fprintf(w, "%s", makeRes(-1, msg, []gozi{}))
+	if err != nil {
+		log.Fatal(err)
 	}
-	// step 3
-	if d > 0 {
-		q = `DELETE FROM ZI
-			where bid in (
-					SELECT B.bid
-					FROM VIEW_LAST_RELATED_OWN_BLOCKS as B 
-					WHERE NOT EXISTS (
-						WITH RECURSIVE
-							XY_IN_B(x,y) as (
-								select ZI.x, ZI.y 
-								FROM ZI JOIN VIEW_LAST_RELATED_OWN_BLOCKS as B ON ZI.bid = B.bid
-							),
-							NEIGHBORS_B(x,y) as (
-								SELECT x, y-1 FROM XY_IN_B 
-								UNION
-								SELECT x, y+1 FROM XY_IN_B
-								UNION
-								SELECT x-1, y FROM XY_IN_B
-								UNION
-								SELECT x+1, y FROM XY_IN_B
-							),
-							QI(x,y) as (
-								SELECT N.x, N.y
-								FROM ZI, NEIGHBORS_B as N
-								WHERE NOT EXISTS (select 1 
-												from ZI 
-												where ZI.x = N.x
-													and ZI.y = N.y)
-							)
-						select 1 from QI
-					)
-				)
-		;`
-		_, err := tx.Exec(q)
-		if err != nil {
-			log.Printf("%s\n", q)
-			return err
-		}
+}
+func writeRes(w http.ResponseWriter, data []gozi) {
+	_, err := fmt.Fprintf(w, "%s", makeRes(0, "OK", data))
+	if err != nil {
+		log.Fatal(err)
 	}
-	return nil
 }
 func main() {
 	log.SetFlags(log.Llongfile | log.LstdFlags)
@@ -203,34 +153,30 @@ func main() {
 		fmt.Printf("/doit\n")
 		err := r.ParseForm()
 		if err != nil {
-			fmt.Fprintf(w, "%s", err)
+			writeResErr(w, err.Error())
 			return
 		}
 		formData := gozi{}
 		json.NewDecoder(r.Body).Decode(&formData)
 		tx, err := db.Begin()
 		if err != nil {
-			fmt.Fprintf(w, "%s", err)
+			writeResErr(w, err.Error())
 			return
 		}
 		err = insertDoDB(tx, formData)
 		if err != nil {
 			tx.Rollback()
 			log.Printf("%s\n", err)
-			fmt.Fprintf(w, "%s", err)
+			writeResErr(w, err.Error())
 			return
-		}
-		a := getAll(db)
-		ab, err := json.Marshal(a)
-		if err != nil {
-			log.Fatal(err)
 		}
 		err = tx.Commit()
 		if err != nil {
-			fmt.Fprintf(w, "%s", err)
+			writeResErr(w, err.Error())
 			return
 		}
-		fmt.Fprintf(w, "%s", ab)
+		a := getAll(db)
+		writeRes(w, a)
 	})
 	http.HandleFunc("/testpage", func(w http.ResponseWriter, r *http.Request) {
 		fr, err := os.Open("index.html")

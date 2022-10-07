@@ -11,7 +11,7 @@ var width = window.innerWidth,
 var uid = 0
 var cursorPos = { x: 0, y: 0 }
 var turn = 1; // 1 黑 or 2 白
-var stones = []
+var stones = new Map()
 
 var _C = document.getElementById("C");
 _C.setAttribute("width", width)
@@ -45,13 +45,14 @@ var toI = function (i, j) {
     return i * boardSize + j
 }
 var boardClear = function () {
-    stones = []
+    stones = new Map()
 }
 
-var makeMove = function (cursorPos, turn) {
-    // 落子
-    cursorPos.uid = turn
-    stones.push(cursorPos)
+function keyXY(pos) {
+    return [pos.x, pos.y].join()
+}
+var makeMove = function (cursorPos, color) {
+    stones.set(keyXY(cursorPos), color);
 }
 var isAllColor = function (lst, color) {
     for (let p of lst) {
@@ -211,13 +212,25 @@ function doNetReq(pos, cb) {
     fetch("/doit", {
         method: "POST",
         body: JSON.stringify(pos)
-    }).then(cb)
+    }).then(function (r) {
+        return r.json()
+    }).then(function (r) {
+        if (r.code === 0) {
+            cb(r.data)
+        } else {
+            console.error(r.msg)
+        }
+    })
 }
 _C.addEventListener("click", function (event) {
     console.log("doit", cursorPos.x, cursorPos.y, turn)
-
-    makeMove(cursorPos, uid)
-    doNetReq(cursorPos, refreshPan)
+    if (stones.has(keyXY(cursorPos))) {
+        let u = stones.get(keyXY(cursorPos))
+        set_uid(u)
+    } else {
+        makeMove(cursorPos, uid)
+        doNetReq(cursorPos, refreshPan)
+    }
 })
 document.body.addEventListener("keypress", function (event) {
     // console.log(event.key)
@@ -232,12 +245,21 @@ document.body.addEventListener("keypress", function (event) {
         beginPoint.y -= step;
     }
 })
+function reMakeStones(lst) {
+    for (let a of lst) {
+        makeMove(a, a.uid)
+    }
+}
 function refreshPan(lst) {
-    getPan(function (lst) {
-        // console.log(lst)
+    if (lst !== undefined) {
         boardClear()
-        stones = lst
-    })
+        reMakeStones(lst)
+    } else {
+        getPan(function (lst) {
+            boardClear()
+            reMakeStones(lst)
+        })
+    }
 }
 function getPan(cb) {
     fetch("/getall").then(function (res) {
@@ -264,11 +286,17 @@ function step(timestamp) {
     ctx.translate(beginPoint.x, beginPoint.y)
     drawPanel()
     drawCursor(cursorPos.x, cursorPos.y)
-    statusBar.textContent = "(" + cursorPos.x + "," + cursorPos.y + ")"
-    // 画棋子
-    for (let s of stones) {
-        drawStone(s.x, s.y, s.uid)
+    let key = keyXY(cursorPos)
+    let s = "(" + key + ")"
+    if (stones.has(key)) {
+        s += " uid = " + stones.get(keyXY(cursorPos))
     }
+    statusBar.textContent = s
+    // 画棋子
+    stones.forEach((v, k) => {
+        let [x, y] = k.split(',').map(x => parseInt(x, 10))
+        drawStone(x, y, v)
+    })
 
     // 当前棋子颜色
     // drawStoneAbs((boardSize + 1) * gridSize, 1 * gridSize, turn);
