@@ -184,14 +184,19 @@ _C.addEventListener("dragend", function (event) {
     console.log('dargend')
     var x = event.x - startDragX, y = event.y - startDragY;
     console.log(x, y)
-    beginPoint.x+=x;beginPoint.y+=y;
+    beginPoint.x += x; beginPoint.y += y;
 })
-// _C.addEventListener("drag", function (event) {
-//     console.log('drag')
-//     var x = event.x - startDragX, y = event.y - startDragY;
-//     console.log(x, y)
-//     beginPoint = { x: -x, y: -y }
-// })
+// for mobile
+_C.addEventListener("touchstart", function (event) {
+    startDragX = event.targetTouches[0].pageX; startDragY = event.targetTouches[0].pageY;
+})
+_C.addEventListener("touchmove", function (event) {
+    var _x = event.targetTouches[0].pageX, _y = event.targetTouches[0].pageY;
+    var x = _x - startDragX, y = _y - startDragY;
+    beginPoint.x += x; beginPoint.y += y;
+    startDragX = _x; startDragY = _y;
+    event.preventDefault()
+})
 _C.addEventListener("mousemove", function (event) {
     // console.log(event.x-beginPoint.x,event.y-beginPoint.y)
     var x = event.x - beginPoint.x;
