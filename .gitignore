@@ -8,3 +8,6 @@
 !index.html
 !tools/
 !tools/*
+!public/
+!public/*
+

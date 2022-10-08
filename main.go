@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -70,9 +68,11 @@ func getXYs(db *sql.Tx, q string, args ...interface{}) (a [][]int) {
 }
 
 var flagDBFile string
+var flagPort string
 
 func init() {
 	flag.StringVar(&flagDBFile, "dbfile", "zi.db", "file path for sqlite db")
+	flag.StringVar(&flagPort, "port", "8081", "port")
 	flag.Parse()
 }
 func getVal(tx *sql.Tx, q string, args ...interface{}) (a int) {
@@ -142,7 +142,10 @@ func main() {
 
 	fmt.Println("SQLITE_VERSION:", version)
 
-	http.Handle("/", http.FileServer(http.Dir(".")))
+	// just for test
+	http.Handle("/", http.FileServer(http.Dir("public")))
+
+	// get
 	http.HandleFunc("/getall", func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
@@ -200,17 +203,21 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Fprintf(w, "%s", string(ab))
-
 	})
 	http.HandleFunc("/doit", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("/doit\n")
+		log.Printf("/doit %v\n", r.RemoteAddr)
 		err := r.ParseForm()
 		if err != nil {
 			writeResErr(w, err.Error())
 			return
 		}
 		formData := gozi{}
-		json.NewDecoder(r.Body).Decode(&formData)
+		err = json.NewDecoder(r.Body).Decode(&formData)
+		if err != nil {
+			writeResErr(w, err.Error())
+			return
+		}
+		log.Printf("%v\n", formData)
 		tx, err := db.Begin()
 		if err != nil {
 			writeResErr(w, err.Error())
@@ -231,16 +238,6 @@ func main() {
 		// a := getAll(db, -1000, 1000, -1000, 1000)
 		writeRes(w, []gozi{})
 	})
-	http.HandleFunc("/testpage", func(w http.ResponseWriter, r *http.Request) {
-		fr, err := os.Open("index.html")
-		if err != nil {
-			log.Fatal(err)
-		}
-		buf := make([]byte, 4096)
-		_, err = io.CopyBuffer(w, fr, buf)
-		if err != nil {
-			log.Fatal(err)
-		}
-	})
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	
+	log.Fatal(http.ListenAndServe(":"+flagPort, nil))
 }

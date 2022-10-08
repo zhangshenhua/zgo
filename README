@@ -7,8 +7,7 @@ how to test
     go mod init zgo
     go mod tidy # maybe you can skip this
     go build 
-    ./zgo -dbfile zi.db
-
+    ./zgo -dbfile zi.db -port 8081
 
 api
 ---
