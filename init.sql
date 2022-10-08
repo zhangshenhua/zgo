@@ -16,6 +16,8 @@ create table ZI(
     Unique (x, y)
 );
 create unique INDEX index_zi_x_y on ZI (x,y);
+CREATE INDEX index_bid ON ZI (bid);
+CREATE INDEX index_uid ON ZI (uid);
 insert into sqlite_sequence VALUES ('ZI', 0); 
 update sqlite_sequence set seq = 0 where name = 'ZI';
 
@@ -242,3 +244,23 @@ FROM (
 
 SELECT * FROM ENV;
 
+-- 为经典围棋保留的区域
+DROP VIEW IF EXISTS VIEW_STD_AREA;
+CREATE VIEW VIEW_STD_AREA AS
+    WITH RECURSIVE
+        X(v) as (
+            SELECT * from generate_series(0,18,1)
+        ),
+        Y(v) as (
+            SELECT * from generate_series(0,18,1)
+        )   
+        SELECT  X.v as x, Y.v as y
+        FROM  X, Y     
+    ;
+-- select * from VIEW_STD_AREA;
+
+
+DELETE FROM ZI
+WHERE (ZI.x, ZI.y) in (
+    SELECT * FROM VIEW_STD_AREA
+    );
