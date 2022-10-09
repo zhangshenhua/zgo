@@ -54,6 +54,28 @@ CREATE VIEW VIEW_LAST_ADJOINING_ZI AS
                             )
     ;
 
+-- a有几口气？
+DROP VIEW IF EXISTS VIEW_LAST_ZI_QISHU;
+CREATE VIEW VIEW_LAST_ZI_QISHU AS
+    WITH
+        NEIGHBORS_A(x, y) as (
+            SELECT x, y-1 FROM VIEW_LAST_ZI 
+            UNION
+            SELECT x, y+1 FROM VIEW_LAST_ZI
+            UNION
+            SELECT x-1, y FROM VIEW_LAST_ZI
+            UNION
+            SELECT x+1, y FROM VIEW_LAST_ZI
+        )
+        SELECT 4 - (
+            SELECT  count(*)
+            FROM    ZI, NEIGHBORS_A A
+            WHERE   ZI.x = A.x and ZI.y = A.y
+            ) as value
+    ;
+
+-- select * from VIEW_LAST_ZI_QISHU;
+
 -- 与a利益相关的块。
 drop view if EXISTS VIEW_LAST_RELATED_BLOCKS;
 CREATE VIEW VIEW_LAST_RELATED_BLOCKS AS
@@ -113,24 +135,35 @@ CREATE VIEW VIEW_RELATED_BLOCKS_QISHU AS
  SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
 
 
--- 落子之后发生的事情。为此系统的核心装置。
-drop TRIGGER if EXISTS zi_insert_clear_trigger;
-CREATE TRIGGER zi_insert_clear_trigger
+-- 落子之后发生的事情。
+drop TRIGGER if EXISTS after_zi_insert_trigger;
+CREATE TRIGGER after_zi_insert_trigger
 AFTER INSERT
 ON ZI
 FOR EACH ROW
 BEGIN
-    -- 0.更新last_go_time变量
-    UPDATE ENV SET value = (select value FROM NOW) WHERE name = 'last_go_time';
-
     -- 1.将a并入邻近的己方块。
     UPDATE ZI 
     SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
     where 
         ZI.bid in (select OWN.bid from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
-    ;
+    ;    
 
-    
+    -- 更新last_go_time变量
+    UPDATE ENV SET value = (select value FROM NOW) WHERE name = 'last_go_time';
+END;
+SELECT * from ENV;
+
+-- 落子之后发生的事情。为此系统的核心装置。
+drop TRIGGER if EXISTS zi_insert_clear_trigger;
+CREATE TRIGGER zi_insert_clear_trigger
+AFTER UPDATE
+ON ENV
+FOR EACH ROW
+WHEN 
+    (SELECT value FROM VIEW_LAST_ZI_QISHU) = 0 OR
+    EXISTS(SELECT * FROM VIEV_LAST_RELATED_ENEMY_BLOCKS)
+BEGIN
     -- 2.提走与a相邻的非己方的无气的块。(气是空位的集合)
     -- B <- {b| b in B_enemy, qi(b)={}}
     -- qi(b) = (  {(x-1,y)|(x,y) in b} 
@@ -159,6 +192,8 @@ BEGIN
         WHERE   T1.QiShu = 0 
     )
     ;    
+
+    
 END;
 
 
