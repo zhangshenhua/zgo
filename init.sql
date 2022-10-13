@@ -16,6 +16,8 @@ create table ZI(
     Unique (x, y)
 );
 create unique INDEX index_zi_x_y on ZI (x,y);
+create INDEX index_zi_x on ZI (x);
+create INDEX index_zi_y on ZI (y);
 CREATE INDEX index_bid ON ZI (bid);
 CREATE INDEX index_uid ON ZI (uid);
 insert into sqlite_sequence VALUES ('ZI', 0); 
@@ -31,6 +33,15 @@ create table ENV(
 );
 INSERT INTO ENV VALUES('system_start_time', (SELECT value FROM NOW));
 INSERT INTO ENV(name) VALUES('last_go_time');
+INSERT INTO ENV(name) VALUES('last_zid');
+
+
+-- 存放运行时变量
+drop TABLE IF EXISTS VAR;
+create table VAR(
+    last_zid   INTEGER
+);
+insert INTO VAR(last_zid) VALUES (NULL);
 
 
 -- 最后落的子a
@@ -43,16 +54,23 @@ CREATE VIEW VIEW_LAST_ZI AS
 -- a以及与a相邻的子
 drop view if EXISTS VIEW_LAST_ADJOINING_ZI;
 CREATE VIEW VIEW_LAST_ADJOINING_ZI AS
-    select ZI.*
-    from ZI, VIEW_LAST_ZI as LAST_ZI
-    where   (ZI.x, ZI.y) in (
-                                (LAST_ZI.x, LAST_ZI.y),
-                                (LAST_ZI.x+1, LAST_ZI.y),
-                                (LAST_ZI.x-1, LAST_ZI.y),
-                                (LAST_ZI.x, LAST_ZI.y+1),
-                                (LAST_ZI.x, LAST_ZI.y-1)
-                            )
+    with N5(x, y) as ( 
+                SELECT x, y FROM VIEW_LAST_ZI
+                UNION
+                SELECT x, y-1 FROM VIEW_LAST_ZI 
+                UNION
+                SELECT x, y+1 FROM VIEW_LAST_ZI
+                UNION
+                SELECT x-1, y FROM VIEW_LAST_ZI
+                UNION
+                SELECT x+1, y FROM VIEW_LAST_ZI)
+    select ZI.* 
+    from N5 INNER JOIN ZI ON ZI.x = N5.x and ZI.y = N5.y
     ;
+
+explain 
+select * from VIEW_LAST_ADJOINING_ZI
+
 
 -- a有几口气？
 DROP VIEW IF EXISTS VIEW_LAST_ZI_QISHU;
@@ -79,10 +97,8 @@ CREATE VIEW VIEW_LAST_ZI_QISHU AS
 -- 与a利益相关的块。
 drop view if EXISTS VIEW_LAST_RELATED_BLOCKS;
 CREATE VIEW VIEW_LAST_RELATED_BLOCKS AS
-    select ZI.bid, ZI.uid
-    from ZI, VIEW_LAST_ADJOINING_ZI as ADJ
-    where  ZI.bid = ADJ.bid
-    group by ZI.bid
+    select bid, uid
+    from VIEW_LAST_ADJOINING_ZI as ADJ
     ;
 
 -- 与a利益相关的己方的块。
@@ -132,7 +148,7 @@ CREATE VIEW VIEW_RELATED_BLOCKS_QISHU AS
         GROUP BY T1.bid
     ;
 
- SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
+SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
 
 
 -- 落子之后发生的事情。
@@ -151,14 +167,15 @@ BEGIN
 
     -- 更新last_go_time变量
     UPDATE ENV SET value = (select value FROM NOW) WHERE name = 'last_go_time';
+    UPDATE VAR SET last_zid = (select id FROM VIEW_LAST_ZI);
 END;
-SELECT * from ENV;
+-- SELECT * from ENV;
 
 -- 落子之后发生的事情。为此系统的核心装置。
 drop TRIGGER if EXISTS zi_insert_clear_trigger;
 CREATE TRIGGER zi_insert_clear_trigger
 AFTER UPDATE
-ON ENV
+OF last_zid ON VAR
 FOR EACH ROW
 WHEN 
     (SELECT value FROM VIEW_LAST_ZI_QISHU) = 0 OR
