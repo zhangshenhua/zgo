@@ -69,7 +69,7 @@ CREATE VIEW VIEW_LAST_ADJOINING_ZI AS
     ;
 
 explain 
-select * from VIEW_LAST_ADJOINING_ZI
+select * from VIEW_LAST_ADJOINING_ZI;
 
 
 -- a有几口气？
