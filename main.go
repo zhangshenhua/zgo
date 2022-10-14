@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -122,31 +123,36 @@ func writeRes(w http.ResponseWriter, data []gozi) {
 		log.Fatal(err)
 	}
 }
+
+func timeIt(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+		f(w, r)
+		d := time.Now().Sub(t)
+		log.Printf("%s %s %s\n", r.URL, r.RemoteAddr, d.String())
+	}
+}
 func main() {
-	log.SetFlags(log.Llongfile | log.LstdFlags)
+	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
 	db, err := sql.Open("sqlite3", flagDBFile)
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
 	var version string
 	err = db.QueryRow("SELECT SQLITE_VERSION()").Scan(&version)
-
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	fmt.Println("SQLITE_VERSION:", version)
 
 	// just for test
 	http.Handle("/", http.FileServer(http.Dir("public")))
 
 	// get
-	http.HandleFunc("/getall", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/getall", timeIt(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			writeResErr(w, err.Error())
@@ -203,9 +209,8 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Fprintf(w, "%s", string(ab))
-	})
-	http.HandleFunc("/doit", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("/doit %v\n", r.RemoteAddr)
+	}))
+	http.HandleFunc("/doit", timeIt(func(w http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		if err != nil {
 			writeResErr(w, err.Error())
@@ -237,7 +242,7 @@ func main() {
 		}
 		// a := getAll(db, -1000, 1000, -1000, 1000)
 		writeRes(w, []gozi{})
-	})
-	
+	}))
+
 	log.Fatal(http.ListenAndServe(":"+flagPort, nil))
 }
