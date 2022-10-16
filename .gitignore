@@ -8,4 +8,5 @@
 !tools/*
 !public/
 !public/*
+!restart.pl
 
