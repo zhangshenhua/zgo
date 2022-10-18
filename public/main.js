@@ -151,7 +151,7 @@ var drawCursor = function (x, y) {
 }
 // drawCursor(10, 10)
 
-var drawStone = function (x, y, color, complex) {
+var drawStone = function (x, y, color, shine, complex) {
     ctx.save()
     var x = x * gridSize;
     var y = y * gridSize
@@ -163,13 +163,19 @@ var drawStone = function (x, y, color, complex) {
     var anticlockwise = false; // 顺时针或逆时针
 
     ctx.arc(x, y, radius, startAngle, endAngle, anticlockwise);
+    ctx.fillStyle = userColor(color)
+    ctx.fill();
 
     if (complex) {
         ctx.strokeStyle = 'black'
         ctx.stroke();
+        if (shine) {
+            ctx.strokeStyle = 'red'
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 3, startAngle, endAngle, anticlockwise);
+            ctx.stroke();
+        }
     }
-    ctx.fillStyle = userColor(color)
-    ctx.fill();
 
     ctx.restore();
 }
@@ -338,7 +344,8 @@ function step(timestamp) {
     // 画棋子
     stones.forEach((v, k) => {
         let [x, y] = k.split(',').map(x => parseInt(x, 10))
-        drawStone(x, y, v, !scaleMin)
+        let is_on = x === cursorPos.x && y === cursorPos.y
+        drawStone(x, y, v, is_on, !scaleMin)
     })
 
     // 当前棋子颜色
