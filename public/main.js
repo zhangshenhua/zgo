@@ -362,3 +362,16 @@ function refreshPanTime() {
     refreshPanZone();
 }
 refreshPanTime()
+
+// 插件
+var plugin = localStorage.getItem("plugin")
+var pluginTA = document.getElementById("plugin")
+if (plugin) {
+    plugin.value = plugin
+    eval(plugin)
+}
+document.getElementById("SaveBtn").addEventListener("click", function (event) {
+    let c = pluginTA.value
+    console.log(c)
+    localStorage.setItem("plugin", c)
+})
