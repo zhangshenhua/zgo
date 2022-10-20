@@ -1,4 +1,4 @@
-
+#!/bin/bash
 export newestfilename=$(ls /home/zhang/zgo/backup/ -Art | tail -n 1)
 export MAILTO="wxiaochi@qq.com, \
 zhang1.61803398@foxmail.com"
