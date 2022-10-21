@@ -1,4 +1,10 @@
 -- 在sqlite3 v3.39.4中执行本文件
+
+PRAGMA page_size=256;
+PRAGMA cache_size=512;
+PRAGMA auto_vacuum;
+
+
 DROP VIEW IF EXISTS NOW;
 CREATE VIEW NOW AS
     select datetime('now','localtime') as value
@@ -144,7 +150,8 @@ CREATE VIEW VIEW_RELATED_BLOCKS_QISHU AS
                 and NOT EXISTS (select 1 
                                 from ZI 
                                 where ZI.x = T1.x
-                                and ZI.y = T1.y)
+                                and ZI.y = T1.y
+                                LIMIT 1)
         GROUP BY T1.bid
     ;
 

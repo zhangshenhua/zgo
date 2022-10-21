@@ -9,4 +9,6 @@
 !public/
 !public/*
 !restart.pl
+!sql/
+!sql/*
 
