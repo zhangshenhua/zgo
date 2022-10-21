@@ -314,45 +314,45 @@ CREATE VIEW VIEW_MINS_AGO AS
 
 
 -- make border
-INSERT INTO ZI(x, y, bid, uid)
-SELECT 
-        POS.x, 
-        POS.y,
-        (SELECT seq+1 FROM sqlite_sequence where name = 'ZI'),
-        4294967040
-FROM (
-    WITH RECURSIVE
-        X(v) as (
-            SELECT * from generate_series(-1,19,1)
-        ),
-        Y(v) as (
-            SELECT * from generate_series(-1,19,1)
-        )   
-        SELECT  X.v as x, Y.v as y
-        FROM  X, Y      
-        where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
-    ) POS
-    ;
+-- INSERT INTO ZI(x, y, bid, uid)
+-- SELECT 
+--         POS.x, 
+--         POS.y,
+--         (SELECT seq+1 FROM sqlite_sequence where name = 'ZI'),
+--         4294967040
+-- FROM (
+--     WITH RECURSIVE
+--         X(v) as (
+--             SELECT * from generate_series(-1,19,1)
+--         ),
+--         Y(v) as (
+--             SELECT * from generate_series(-1,19,1)
+--         )   
+--         SELECT  X.v as x, Y.v as y
+--         FROM  X, Y      
+--         where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
+--     ) POS
+--     ;
 
-SELECT * FROM ENV;
+-- SELECT * FROM ENV;
 
 -- 为经典围棋保留的区域
-DROP VIEW IF EXISTS VIEW_STD_AREA;
-CREATE VIEW VIEW_STD_AREA AS
-    WITH RECURSIVE
-        X(v) as (
-            SELECT * from generate_series(0,18,1)
-        ),
-        Y(v) as (
-            SELECT * from generate_series(0,18,1)
-        )   
-        SELECT  X.v as x, Y.v as y
-        FROM  X, Y     
-    ;
--- select * from VIEW_STD_AREA;
+-- DROP VIEW IF EXISTS VIEW_STD_AREA;
+-- CREATE VIEW VIEW_STD_AREA AS
+--     WITH RECURSIVE
+--         X(v) as (
+--             SELECT * from generate_series(0,18,1)
+--         ),
+--         Y(v) as (
+--             SELECT * from generate_series(0,18,1)
+--         )   
+--         SELECT  X.v as x, Y.v as y
+--         FROM  X, Y     
+--     ;
+-- -- select * from VIEW_STD_AREA;
 
 
-DELETE FROM ZI
-WHERE (ZI.x, ZI.y) in (
-    SELECT * FROM VIEW_STD_AREA
-    );
+-- DELETE FROM ZI
+-- WHERE (ZI.x, ZI.y) in (
+--     SELECT * FROM VIEW_STD_AREA
+--     );
