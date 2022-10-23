@@ -4,11 +4,6 @@
 -- init3.1.sql 希望将 init3.sql 中的新思想更彻底的贯彻。
 
 
-PRAGMA page_size=256;
-PRAGMA cache_size=512;
-PRAGMA auto_vacuum;
-
-
 DROP VIEW IF EXISTS NOW;
 CREATE VIEW NOW AS
     select datetime('now','localtime') as value
