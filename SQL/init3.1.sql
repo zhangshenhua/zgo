@@ -1,4 +1,5 @@
 -- 在sqlite3 v3.39.4中执行本文件
+-- 现实化的服务器地址是 http://124.221.142.162:8081/
 -- init3.sql 希望实现一个略微高效的 VIEW_NEED_CLEAR 供触发器的when使用。
 -- init3.1.sql 希望将 init3.sql 中的新思想更彻底的贯彻。
 
