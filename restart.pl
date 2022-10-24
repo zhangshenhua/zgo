@@ -9,14 +9,9 @@ $PID = `  lsof -t -i:"$PORT"  `;
 
 print $PID;
 
-if($PID) {
-        say `kill $PID `;
-}
-
-
 
 $cmd = qq{
-nohup ./zgo -dbfile zi.db -port $PORT > $PORT.nohup.out &
+kill $PID && nohup ./zgo -dbfile zi.db -port $PORT > $PORT.nohup.out &
 };
 
 say $cmd;
