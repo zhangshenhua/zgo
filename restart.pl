@@ -5,7 +5,7 @@ use 5.010;
 
 $PORT = $ARGV[0];
 
-$PID = `  lsof -t -i:"$PORT"  `;
+$PID = `  lsof -t -i:"$PORT" | xargs echo -n`;
 
 print $PID;
 
