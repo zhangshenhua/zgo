@@ -3,21 +3,27 @@
 
 use 5.010;
 
-$PORT = $ARGV[0];
+$PORT = $ARGV[0] || die "port must spec";
 
-$PID = `  lsof -t -i:"$PORT" | xargs echo -n`;
+$PID = `lsof -t -i:"$PORT" | xargs echo -n`;
 
-print $PID;
+say $PID;
+chomp $PID;
+if($PID) {
+    $cmd = qq{
+    kill $PID && nohup ./zgo -dbfile zi.db -port $PORT >> $PORT.nohup.out &
+    };
+}else{
+    $cmd = qq{
+    nohup ./zgo -dbfile zi.db -port $PORT >> $PORT.nohup.out &
+    };
+}
 
-
-$cmd = qq{
-kill $PID && nohup ./zgo -dbfile zi.db -port $PORT > $PORT.nohup.out &
-};
 
 say $cmd;
 
-system $cmd || exit;
+system($cmd) && die "end with error";
 
 
 say 'OK';
-exit;
+
