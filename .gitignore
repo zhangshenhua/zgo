@@ -12,4 +12,4 @@
 !sql/
 !sql/*
 !backup.sh
-!crontab
+!crontab.txt
