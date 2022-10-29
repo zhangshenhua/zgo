@@ -1,0 +1,5 @@
+* * * * * /usr/bin/env > /home/$(whoami)/tmp/cron-env
+* * * * * cd zgo/tools; python3 renew.py >> renew.log
+0 6 * * * cd zgo/; sh backup.sh
+0 7 * * * bash -cl zgo/tools/sendmail.pl
+
