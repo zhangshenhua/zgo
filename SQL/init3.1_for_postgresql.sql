@@ -33,7 +33,10 @@ create table ZI(
     uid  integer NOT NULL ,
     Unique (x, y)
 );
-ALTER SEQUENCE zi_id_seq MINVALUE 0 START WITH 0; 
+ALTER SEQUENCE zi_id_seq 
+	AS bigint
+	MINVALUE 0 
+	START WITH 0; 
 create unique INDEX index_zi_x_y on ZI (x,y);
 create INDEX index_zi_x on ZI (x);
 create INDEX index_zi_y on ZI (y);
