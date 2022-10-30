@@ -11,11 +11,11 @@ say $PID;
 chomp $PID;
 if($PID) {
     $cmd = qq{
-    kill $PID && nohup ./zgo -dbfile zi.db -port $PORT >> $PORT.nohup.out &
+    kill $PID && nohup ./zgo -port $PORT >> $PORT.nohup.out &
     };
 }else{
     $cmd = qq{
-    nohup ./zgo -dbfile zi.db -port $PORT >> $PORT.nohup.out &
+    nohup ./zgo -port $PORT >> $PORT.nohup.out &
     };
 }
 
