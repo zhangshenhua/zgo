@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
 type gozi struct {
@@ -29,7 +29,7 @@ func getNextBid(db *sql.Tx) (nb int) {
 }
 func getAll(db *sql.DB, x1, y1, x2, y2 int) []gozi {
 	rows, err := db.Query(`SELECT x,y,bid,uid from ZI 
-		where x>=?and x<=? and y>=? and y<=?`,
+		where x>=$1 and x<=$2 and y>=$3 and y<=$4`,
 		x1, x2, y1, y2)
 	if err != nil {
 		log.Fatal("db error in getall: ", err)
@@ -90,7 +90,7 @@ func getVal(tx *sql.Tx, q string, args ...interface{}) (a int) {
 }
 func insertDoDB(tx *sql.Tx, data gozi) error {
 	nb := getNextBid(tx)
-	sql := fmt.Sprintf(`insert INTO ZI (x, y, bid, uid) values (?,?,?,?)`)
+	sql := fmt.Sprintf(`insert INTO ZI (x, y, bid, uid) values ($1,$2,$3,$4)`)
 	_, err := tx.Exec(sql, data.X, data.Y, nb, data.Uid)
 	if err != nil {
 		return err
@@ -132,21 +132,31 @@ func timeIt(f func(w http.ResponseWriter, r *http.Request)) func(w http.Response
 		log.Printf("%s %s %s\n", r.URL, r.RemoteAddr, d.String())
 	}
 }
+
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "zi"
+	password = "zi"
+	dbname   = "zi"
+)
+
 func main() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags)
 
-	db, err := sql.Open("sqlite3", flagDBFile)
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlconn)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
 
 	var version string
-	err = db.QueryRow("SELECT SQLITE_VERSION()").Scan(&version)
+	err = db.QueryRow("SELECT VERSION()").Scan(&version)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("SQLITE_VERSION:", version)
+	fmt.Println("DB_VERSION:", version)
 
 	// just for test
 	http.Handle("/", http.FileServer(http.Dir("public")))
