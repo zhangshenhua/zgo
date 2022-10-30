@@ -311,48 +311,48 @@ CREATE OR REPLACE VIEW VIEW_MINS_AGO AS
 
 
 -- tests
-DELETE FROM ZI;
-select setval('zi_id_seq', 0);
-SELECT currval('zi_id_seq');
-insert INTO ZI (x, y, bid, uid) SELECT 1,  0, currval('zi_id_seq')+1,  0;
-insert INTO ZI (x, y, bid, uid) SELECT 0,  1, currval('zi_id_seq')+1,  0;
-insert INTO ZI (x, y, bid, uid) SELECT -1, 0, currval('zi_id_seq')+1,  0;
-insert INTO ZI (x, y, bid, uid) SELECT 0, -1, currval('zi_id_seq')+1,  0;
+-- DELETE FROM ZI;
+-- select setval('zi_id_seq', 0);
+-- SELECT currval('zi_id_seq');
+-- insert INTO ZI (x, y, bid, uid) SELECT 1,  0, currval('zi_id_seq')+1,  0;
+-- insert INTO ZI (x, y, bid, uid) SELECT 0,  1, currval('zi_id_seq')+1,  0;
+-- insert INTO ZI (x, y, bid, uid) SELECT -1, 0, currval('zi_id_seq')+1,  0;
+-- insert INTO ZI (x, y, bid, uid) SELECT 0, -1, currval('zi_id_seq')+1,  0;
 
-insert INTO ZI (x, y, bid, uid) SELECT  0,  2, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT  0, -2, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT -2,  0, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT  2,  0, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT -1,  1, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT -1, -1, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT  1,  1, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT  1, -1, currval('zi_id_seq')+1, 1;
-insert INTO ZI (x, y, bid, uid) SELECT  0,  0, currval('zi_id_seq')+1, 2;
+-- insert INTO ZI (x, y, bid, uid) SELECT  0,  2, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  0, -2, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT -2,  0, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  2,  0, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT -1,  1, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT -1, -1, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  1,  1, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  1, -1, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  0,  0, currval('zi_id_seq')+1, 2;
 
-insert INTO ZI (x, y, bid, uid) SELECT 100, 2, currval('zi_id_seq')+1, 0;
-insert INTO ZI (x, y, bid, uid) SELECT 100, 3, currval('zi_id_seq')+1, 0;
-insert INTO ZI (x, y, bid, uid) SELECT 100, 4, currval('zi_id_seq')+1, 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT 100, 2, currval('zi_id_seq')+1, 0;
+-- insert INTO ZI (x, y, bid, uid) SELECT 100, 3, currval('zi_id_seq')+1, 0;
+-- insert INTO ZI (x, y, bid, uid) SELECT 100, 4, currval('zi_id_seq')+1, 1;
 
-insert INTO ZI (x, y, bid, uid) SELECT 1,   0, currval('zi_id_seq')+1, 0;
-insert INTO ZI (x, y, bid, uid) SELECT 0,   1, currval('zi_id_seq')+1, 0;
-insert INTO ZI (x, y, bid, uid) SELECT -1,  0, currval('zi_id_seq')+1, 0;
-insert INTO ZI (x, y, bid, uid) SELECT 0,  -1, currval('zi_id_seq')+1, 0;
-SELECT * from ZI;
+-- insert INTO ZI (x, y, bid, uid) SELECT 1,   0, currval('zi_id_seq')+1, 0;
+-- insert INTO ZI (x, y, bid, uid) SELECT 0,   1, currval('zi_id_seq')+1, 0;
+-- insert INTO ZI (x, y, bid, uid) SELECT -1,  0, currval('zi_id_seq')+1, 0;
+-- insert INTO ZI (x, y, bid, uid) SELECT 0,  -1, currval('zi_id_seq')+1, 0;
+-- SELECT * from ZI;
 
 
 -- -- tests DaJie
-DELETE FROM ZI;
-select setval('zi_id_seq', 0);
-SELECT currval('zi_id_seq');
-insert INTO ZI (x, y, bid, uid) SELECT  9,  8,   currval('zi_id_seq'), 1;
-insert INTO ZI (x, y, bid, uid) SELECT  8,  9,   currval('zi_id_seq'), 1;
-insert INTO ZI (x, y, bid, uid) SELECT  9,  10,  currval('zi_id_seq'), 1;
-insert INTO ZI (x, y, bid, uid) SELECT  10,  8,  currval('zi_id_seq'), 2;
-insert INTO ZI (x, y, bid, uid) SELECT  11,  9,  currval('zi_id_seq'), 2;
-insert INTO ZI (x, y, bid, uid) SELECT  10,  10, currval('zi_id_seq'), 2;
-insert INTO ZI (x, y, bid, uid) SELECT  9,   9,  currval('zi_id_seq'), 2;
-insert INTO ZI (x, y, bid, uid) SELECT  10,  9,  currval('zi_id_seq'), 1;
-SELECT * from ZI;
+-- DELETE FROM ZI;
+-- select setval('zi_id_seq', 0);
+-- SELECT currval('zi_id_seq');
+-- insert INTO ZI (x, y, bid, uid) SELECT  9,  8,   currval('zi_id_seq'), 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  8,  9,   currval('zi_id_seq'), 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  9,  10,  currval('zi_id_seq'), 1;
+-- insert INTO ZI (x, y, bid, uid) SELECT  10,  8,  currval('zi_id_seq'), 2;
+-- insert INTO ZI (x, y, bid, uid) SELECT  11,  9,  currval('zi_id_seq'), 2;
+-- insert INTO ZI (x, y, bid, uid) SELECT  10,  10, currval('zi_id_seq'), 2;
+-- insert INTO ZI (x, y, bid, uid) SELECT  9,   9,  currval('zi_id_seq'), 2;
+-- insert INTO ZI (x, y, bid, uid) SELECT  10,  9,  currval('zi_id_seq'), 1;
+-- SELECT * from ZI;
 
 
 -- make border
