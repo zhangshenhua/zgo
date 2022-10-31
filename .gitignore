@@ -9,7 +9,7 @@
 !public/
 !public/*
 !restart.pl
-!sql/
-!sql/*
+!SQL/
+!SQL/*
 !backup.sh
 !crontab.txt

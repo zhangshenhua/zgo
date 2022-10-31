@@ -30,7 +30,7 @@ create table ZI(
     x INT2 check(x >= -10000 and x <= 10000),
     y INT2 check(y >= -10000 and y <= 10000),
     bid  bigint NOT NULL,
-    uid  integer NOT NULL ,
+    uid  bigint NOT NULL ,
     Unique (x, y)
 );
 ALTER SEQUENCE zi_id_seq 
@@ -58,7 +58,7 @@ INSERT INTO ENV(name) VALUES('last_zid');
 -- 存放运行时变量
 drop TABLE IF EXISTS VAR;
 create table VAR(
-    last_zid   INTEGER
+    last_zid   bigint
 );
 insert INTO VAR(last_zid) VALUES (NULL);
 
@@ -87,8 +87,8 @@ CREATE VIEW VIEW_LAST_ADJOINING_ZI AS
     from N5 INNER JOIN ZI ON ZI.x = N5.x and ZI.y = N5.y
     ;
 
-explain 
-select * from VIEW_LAST_ADJOINING_ZI;
+
+-- select * from VIEW_LAST_ADJOINING_ZI;
 
 
 -- a有几口气？
@@ -169,44 +169,7 @@ CREATE VIEW VIEW_RELATED_BLOCKS_QISHU AS
         GROUP BY T1.uid, T1.bid
     ;
 
-SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
-
-
-
-
-
-
-
-
--- 落子之后发生的事情。
-CREATE or REPLACE FUNCTION after_zi_insert_trigger()
-    RETURNS trigger
-    LANGUAGE 'plpgsql'
-     NOT LEAKPROOF
-AS $BODY$
-BEGIN
-    -- 1.将a并入邻近的己方块。
-    UPDATE ZI 
-    SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
-    where 
-        ZI.bid in (select OWN.bid from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
-    ;    
-
-    -- 更新last_go_time变量
-    UPDATE ENV SET value = (select value FROM NOW) WHERE name = 'last_go_time';
-    UPDATE VAR SET last_zid = (select id FROM VIEW_LAST_ZI);
-	return NULL;
-END;
-$BODY$;
-
-drop TRIGGER if EXISTS after_zi_insert_trigger on zi;
-CREATE TRIGGER  after_zi_insert_trigger
-AFTER INSERT
-ON ZI
-FOR EACH ROW
-EXECUTE FUNCTION after_zi_insert_trigger();
--- SELECT * from ENV;
-
+-- SELECT * FROM VIEW_RELATED_BLOCKS_QISHU;
 
 -- 列出所有需要结算的块
 CREATE OR REPLACE VIEW VIEW_NEED_CLEAR_BLOCKS AS
@@ -240,7 +203,7 @@ CREATE OR REPLACE VIEW VIEW_NEED_CLEAR_BLOCKS AS
 CREATE OR REPLACE FUNCTION need_clear()
     RETURNS boolean
     LANGUAGE 'sql'
-    IMMUTABLE 
+    VOLATILE 
 AS $BODY$
 SELECT  exists( -- 存在没气的块
                 SELECT  bid FROM VIEW_NEED_CLEAR_BLOCKS
@@ -249,50 +212,78 @@ $BODY$;
 -- select need_clear();
 
 
--- 落子之后发生的事情。为此系统的核心装置。
-CREATE or REPLACE FUNCTION zi_insert_clear_trigger()
+create or REPLACE FUNCTION f() returns integer
+as $$
+begin
+    RETURN 1;
+    RETURN 2;
+end;
+$$ LANGUAGE 'plpgsql';
+
+
+-- 落子之后发生的事情。
+CREATE or REPLACE FUNCTION after_zi_insert_trigger()
     RETURNS trigger
-    LANGUAGE 'plpgsql'
-     NOT LEAKPROOF
 AS $BODY$
+-- DECLARE ret ZI.bid%TYPE;
 BEGIN
-    -- 2.提走与a相邻的非己方的无气的块。(气是空位的集合)
-    -- B <- {b| b in B_enemy, qi(b)={}}
-    -- qi(b) = (  {(x-1,y)|(x,y) in b} 
-    --         U {(x+1,y)|(x,y) in b} 
-    --         U {(x,-y)|(x,y) in b}
-    --         U {(x,+y)|(x,y) in b} ) - ZI
-    DELETE FROM ZI
-    where bid in ( -- 无气的敌块
-        SELECT  B.bid
-        FROM    VIEW_NEED_CLEAR_BLOCKS B INNER JOIN ZI ON B.bid = ZI.bid
-                INNER JOIN VIEW_LAST_ZI a ON a.uid <> ZI.uid
-    )
-    ;
-    -- 3.提走与a相邻的无气的块。(气是空位的集合)
-    -- B <- {b| b in B_own, qi(b)={}}
-    -- qi(b) = (  {(x-1,y)|(x,y) in b} 
-    --         U {(x+1,y)|(x,y) in b} 
-    --         U {(x,-y)|(x,y) in b}
-    --         U {(x,+y)|(x,y) in b} ) - ZI 
-    DELETE FROM ZI
-    where bid in ( -- 无气的己方块
-        SELECT  B.bid
-        FROM    VIEW_NEED_CLEAR_BLOCKS B INNER JOIN ZI ON B.bid = ZI.bid
-                INNER JOIN VIEW_LAST_ZI a ON a.uid = ZI.uid
-    )
-    ;  
+    -- 1.将a并入邻近的己方块。
+    UPDATE ZI 
+    SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
+    where 
+        ZI.bid in (select OWN.bid from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
+    ;    
+    -- 更新last_go_time变量
+    UPDATE ENV SET value = (select value FROM NOW) WHERE name = 'last_go_time';
+    UPDATE VAR SET last_zid = (select id FROM VIEW_LAST_ZI);
+
+    IF need_clear() THEN
+        -- 2.提走与a相邻的非己方的无气的块。(气是空位的集合)
+        -- B <- {b| b in B_enemy, qi(b)={}}
+        -- qi(b) = (  {(x-1,y)|(x,y) in b} 
+        --         U {(x+1,y)|(x,y) in b} 
+        --         U {(x,-y)|(x,y) in b}
+        --         U {(x,+y)|(x,y) in b} ) - ZI
+        
+        DELETE FROM ZI
+        where bid in ( -- 无气的敌块
+            SELECT  B.bid
+            FROM    VIEW_NEED_CLEAR_BLOCKS B INNER JOIN ZI ON B.bid = ZI.bid
+                    INNER JOIN VIEW_LAST_ZI a ON a.uid <> ZI.uid
+        )
+        ;
+
+        IF FOUND  THEN
+            return NULL;
+        END IF;
+
+        -- 3.提走与a相邻的无气的块。(气是空位的集合)
+        -- B <- {b| b in B_own, qi(b)={}}
+        -- qi(b) = (  {(x-1,y)|(x,y) in b} 
+        --         U {(x+1,y)|(x,y) in b} 
+        --         U {(x,-y)|(x,y) in b}
+        --         U {(x,+y)|(x,y) in b} ) - ZI 
+        DELETE FROM ZI
+        where bid in ( -- 无气的己方块
+            SELECT  B.bid
+            FROM    VIEW_NEED_CLEAR_BLOCKS B INNER JOIN ZI ON B.bid = ZI.bid
+                    INNER JOIN VIEW_LAST_ZI a ON a.uid = ZI.uid
+        );
+    END IF;
 	return NULL;
 END;
-$BODY$;
+$BODY$ 
+LANGUAGE 'plpgsql';
 
-drop TRIGGER if EXISTS zi_insert_clear_trigger ON VAR;
-CREATE TRIGGER zi_insert_clear_trigger
-AFTER UPDATE
-OF last_zid ON VAR
+
+
+drop TRIGGER if EXISTS after_zi_insert_trigger on zi;
+CREATE TRIGGER  after_zi_insert_trigger
+AFTER INSERT
+ON ZI
 FOR EACH ROW
-WHEN (need_clear())
-EXECUTE FUNCTION zi_insert_clear_trigger();
+EXECUTE FUNCTION after_zi_insert_trigger();
+-- SELECT * from ENV;
 
 
 -- 最后落子时间
@@ -356,25 +347,25 @@ CREATE OR REPLACE VIEW VIEW_MINS_AGO AS
 
 
 -- make border
--- INSERT INTO ZI(x, y, bid, uid)
--- SELECT 
---         POS.x, 
---         POS.y,
---         (SELECT seq+1 FROM sqlite_sequence where name = 'ZI'),
---         4294967040
--- FROM (
---     WITH RECURSIVE
---         X(v) as (
---             SELECT * from generate_series(-1,19,1)
---         ),
---         Y(v) as (
---             SELECT * from generate_series(-1,19,1)
---         )   
---         SELECT  X.v as x, Y.v as y
---         FROM  X, Y      
---         where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
---     ) POS
---     ;
+INSERT INTO ZI(x, y, bid, uid)
+SELECT 
+        POS.x, 
+        POS.y,
+        (select last_value from zi_id_seq),
+        4294967040
+FROM (
+    WITH RECURSIVE
+        X(v) as (
+            SELECT * from generate_series(-1,19,1)
+        ),
+        Y(v) as (
+            SELECT * from generate_series(-1,19,1)
+        )   
+        SELECT  X.v as x, Y.v as y
+        FROM  X, Y      
+        where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
+    ) POS
+    ;
 
 -- SELECT * FROM ENV;
 
@@ -406,4 +397,18 @@ CREATE OR REPLACE VIEW VIEW_MINS_AGO AS
 VIEW_ZI是与"后端程序"的接口。"后端程序":
 insert into VIEW_ZI(uid, x, y) values (<uid>, <x>, <y>); -- 块信息由数据库通过建在视图上的insteed触发器来维护
 或者select * from VIEW_ZI;                               -- 布局信息由数据库负责给出
+*/
+
+/*
+ALTER TABLE zi DISABLE TRIGGER ALL;
+ALTER TABLE var DISABLE TRIGGER ALL;
+
+\i backup.sql
+
+ALTER TABLE zi ENABLE TRIGGER ALL;
+ALTER TABLE var ENABLE TRIGGER ALL;
+-------------------- OR -----------------------
+SET session_replication_role = replica;
+
+SET session_replication_role = DEFAULT;
 */
