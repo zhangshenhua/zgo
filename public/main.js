@@ -126,12 +126,12 @@ var drawStars = function () {
     }
 }
 var drawPanel = function (viewport) {
-    if(scale<0.5) {
-        return;
+    if(scale >= 0.5) {
+        drawLines();
     }
     // console.log('draw in ', x1, y1,x2,y2)
-    drawLines()
-    drawStars()
+    
+    drawStars();
 }
 // drawPanel(boardSize)
 
