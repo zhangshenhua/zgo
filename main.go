@@ -19,16 +19,16 @@ type gozi struct {
 	Uid int `json:"uid"`
 }
 
-func getNextBid(db *sql.Tx) (nb int) {
-	sql := fmt.Sprintf("SELECT max(bid) from zi")
-	err := db.QueryRow(sql).Scan(&nb)
-	if err != nil {
-		return 1
-	}
-	return nb + 1
-}
+//	func getNextBid(db *sql.Tx) (nb int) {
+//		sql := fmt.Sprintf("SELECT max(bid) from zi")
+//		err := db.QueryRow(sql).Scan(&nb)
+//		if err != nil {
+//			return 1
+//		}
+//		return nb + 1
+//	}
 func getAll(db *sql.DB, x1, y1, x2, y2 int) []gozi {
-	rows, err := db.Query(`SELECT x,y,bid,uid from ZI 
+	rows, err := db.Query(`SELECT x,y,bid,uid from VIEW_ZI 
 		where x>=$1 and x<=$2 and y>=$3 and y<=$4`,
 		x1, x2, y1, y2)
 	if err != nil {
@@ -89,9 +89,9 @@ func getVal(tx *sql.Tx, q string, args ...interface{}) (a int) {
 	return a
 }
 func insertDoDB(tx *sql.Tx, data gozi) error {
-	nb := getNextBid(tx)
-	sql := fmt.Sprintf(`insert INTO ZI (x, y, bid, uid) values ($1,$2,$3,$4)`)
-	_, err := tx.Exec(sql, data.X, data.Y, nb, data.Uid)
+	// nb := getNextBid(tx)
+	sql := fmt.Sprintf(`insert INTO VIEW_ZI (x, y, uid) values ($1,$2,$3)`)
+	_, err := tx.Exec(sql, data.X, data.Y, data.Uid)
 	if err != nil {
 		return err
 	}
