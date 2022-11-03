@@ -227,7 +227,7 @@ CREATE or REPLACE FUNCTION after_zi_insert_trigger()
 AS $BODY$
 -- DECLARE ret ZI.bid%TYPE;
 BEGIN
-    INSERT INTO ZI(x, y, uid, bid) values (NEW.x, NEW.y, NEW.uid, currval('zi_id_seq')+1);
+    INSERT INTO ZI(x, y, uid, bid) values (NEW.x, NEW.y, NEW.uid, (select last_value+1 from zi_id_seq));
     -- 1.将a并入邻近的己方块。
     UPDATE ZI 
     SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
@@ -350,25 +350,25 @@ CREATE OR REPLACE VIEW VIEW_MINS_AGO AS
 
 
 -- make border
-INSERT INTO VIEW_ZI(x, y, uid)
-SELECT 
-        POS.x, 
-        POS.y,
-        -- (select last_value from zi_id_seq),
-        4294967040
-FROM (
-    WITH RECURSIVE
-        X(v) as (
-            SELECT * from generate_series(-1,19,1)
-        ),
-        Y(v) as (
-            SELECT * from generate_series(-1,19,1)
-        )   
-        SELECT  X.v as x, Y.v as y
-        FROM  X, Y      
-        where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
-    ) POS
-    ;
+-- INSERT INTO VIEW_ZI(x, y, uid)
+-- SELECT 
+--         POS.x, 
+--         POS.y,
+--         -- (select last_value from zi_id_seq),
+--         4294967040
+-- FROM (
+--     WITH RECURSIVE
+--         X(v) as (
+--             SELECT * from generate_series(-1,19,1)
+--         ),
+--         Y(v) as (
+--             SELECT * from generate_series(-1,19,1)
+--         )   
+--         SELECT  X.v as x, Y.v as y
+--         FROM  X, Y      
+--         where X.v = -1 or X.v = 19 or Y.v = -1 or Y.v = 19
+--     ) POS
+--     ;
 
 -- SELECT * FROM ENV;
 
