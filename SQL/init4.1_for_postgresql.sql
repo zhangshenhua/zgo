@@ -23,20 +23,27 @@ CREATE OR REPLACE VIEW NOW AS
 ;
 SELECT * FROM NOW;
 
+DROP SEQUENCE if exists id_seq CASCADE;
+CREATE SEQUENCE IF NOT EXISTS id_seq
+    AS bigint
+    INCREMENT BY 1
+    MINVALUE 0 
+    START WITH 0 
+    -- OWNED BY zi.id
+    ;
+select setval('id_seq', 0);
 
 drop TABLE IF EXISTS ZI CASCADE;
 create table ZI(
-    id SERIAL PRIMARY KEY,
+    id bigint PRIMARY KEY DEFAULT nextval('id_seq'),
+    bid  bigint NOT NULL,
     x INT2 check(x >= -10000 and x <= 10000),
     y INT2 check(y >= -10000 and y <= 10000),
-    bid  bigint NOT NULL,
     uid  bigint NOT NULL ,
     Unique (x, y)
 );
-ALTER SEQUENCE zi_id_seq 
-	AS bigint
-	MINVALUE 0 
-	START WITH 0; 
+-- ALTER SEQUENCE id_seq OWNED BY ZI.id;
+
 create unique INDEX index_zi_x_y on ZI (x,y);
 create INDEX index_zi_x on ZI (x);
 create INDEX index_zi_y on ZI (y);
@@ -227,7 +234,7 @@ CREATE or REPLACE FUNCTION after_zi_insert_trigger()
 AS $BODY$
 -- DECLARE ret ZI.bid%TYPE;
 BEGIN
-    INSERT INTO ZI(x, y, uid, bid) values (NEW.x, NEW.y, NEW.uid, (select last_value+1 from zi_id_seq));
+    INSERT INTO ZI(x, y, uid, bid) values (NEW.x, NEW.y, NEW.uid, (select currval('id_seq') + 1));
     -- 1.将a并入邻近的己方块。
     UPDATE ZI 
     SET bid = (select min(OWN.bid) from VIEW_LAST_RELATED_OWN_BLOCKS as OWN)
