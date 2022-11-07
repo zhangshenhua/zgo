@@ -4,10 +4,19 @@ how to test
 -----------
 
     # install go first
+    
     go mod init zgo
     go mod tidy # maybe you can skip this
     go build 
-    ./zgo -dbfile zi.db -port 8081
+
+
+    # init db
+    sqlite3 conway.db < SQL/init_conway0.01.sql
+    # run server
+    ./zgo -dbfile conway.db -port 8083
+    # conway evolution (you can add it into crontab or jenkins)
+    sqlite3 conway.db < SQL/conway_evolution.sql  
+
 
 api
 ---
