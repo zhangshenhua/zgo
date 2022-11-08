@@ -106,8 +106,8 @@ WITH
     SELECT N.x, N.y, (
             SELECT uid 
             FROM ZI
-            WHERE   (ZI.x BETWEEN N.x-1 AND N.x+1)
-            AND     (ZI.y BETWEEN N.y-1 AND N.y+1)
+            WHERE   (ZI.x BETWEEN ZI.x-1 AND ZI.x+1)
+            AND     (ZI.y BETWEEN ZI.y-1 AND ZI.y+1)
             LIMIT 1
             ) as uid
     FROM N
