@@ -28,7 +28,7 @@ func getNextBid(db *sql.Tx) (nb int) {
 	return nb + 1
 }
 func getAll(db *sql.DB, x1, y1, x2, y2 int) []gozi {
-	rows, err := db.Query(`SELECT x,y,bid,uid from ZI 
+	rows, err := db.Query(`SELECT x, y, uid, bid from ZI 
 		where x>=?and x<=? and y>=? and y<=?`,
 		x1, x2, y1, y2)
 	if err != nil {
@@ -37,7 +37,7 @@ func getAll(db *sql.DB, x1, y1, x2, y2 int) []gozi {
 	a := make([]gozi, 0)
 	for rows.Next() {
 		var x, y, bid, uid int
-		rows.Scan(&x, &y, &bid, &uid)
+		rows.Scan(&x, &y, &uid, &bid)
 		a = append(a, gozi{x, y, uid})
 	}
 	return a
