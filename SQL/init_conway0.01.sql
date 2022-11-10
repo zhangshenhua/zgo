@@ -103,13 +103,19 @@ WITH
         EXCEPT
         SELECT x, y FROM ZI
     )
-    SELECT N.x, N.y, (
-            SELECT uid 
-            FROM ZI
-            WHERE   (ZI.x BETWEEN ZI.x-1 AND ZI.x+1)
-            AND     (ZI.y BETWEEN ZI.y-1 AND ZI.y+1)
-            LIMIT 1
-            ) as uid
+    SELECT N.x, N.y, 
+           (
+            SELECT uid
+            FROM (
+                select uid from ZI where
+                (ZI.x, ZI.y) in (
+                    (N.x-1, N.y+1), (N.x, N.y+1), (N.x+1, N.y+1),
+                    (N.x-1, N.y  ),               (N.x+1, N.y  ),
+                    (N.x-1, N.y-1), (N.x, N.y-1), (N.x+1, N.y-1)
+                )
+                LIMIT 1
+            )
+        ) as uid
     FROM N
     WHERE (
         WITH
@@ -171,3 +177,4 @@ CREATE VIEW positions_need_delete AS
 ;
 -- select * from positions_need_delete;
 
+SELECT * from ZI;
