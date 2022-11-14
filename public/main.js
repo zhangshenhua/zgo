@@ -4,8 +4,14 @@ var scale = 1.0;
 var gridSize = 25;
 var stoneSize = 10;
 var boardSize = 19;
-var width = window.innerWidth,
-    height = window.innerHeight;
+var get_width = function(){
+    return window.innerWidth;
+}
+var get_height = function(){
+    return window.innerHeight;
+}
+var width = get_width(),
+    height = get_height();
 var beginPoint = { x: width / 2, y: height / 2 };
 
 // 全局变量
