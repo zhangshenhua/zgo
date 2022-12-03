@@ -33,5 +33,10 @@ with
     B(bid) as (
         select bid from VIEW_BLOCKS_HAS_NO_QI
     )
-DELETE from zi where zi.bid in (select bid from B);
+DELETE 
+from zi 
+where EXISTS (
+    select 1 
+    from B
+    WHERE zi.bid = B.bid);
 
