@@ -23,7 +23,7 @@ CREATE VIEW VIEW_BLOCKS_HAS_NO_QI as
                 EXCEPT
                 SELECT x, y FROM ZI
             )
-            SELECT * from Q
+            SELECT 1 from Q
             limit 1
         )
 ;
@@ -39,4 +39,5 @@ where EXISTS (
     select 1 
     from B
     WHERE zi.bid = B.bid);
+
 
