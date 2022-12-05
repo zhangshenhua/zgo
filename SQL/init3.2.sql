@@ -153,6 +153,7 @@ CREATE VIEW VIEW_NEED_CLEAR AS
     -- 一个块有气是指其中仍一子有气。
     SELECT  exists( -- 存在没气的块
                 SELECT 1 FROM VIEW_NEED_CLEAR_BLOCKS
+                LIMIT 1
             ) as need
 ;
 -- select * from VIEW_NEED_CLEAR;
