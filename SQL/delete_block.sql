@@ -50,4 +50,4 @@ WHERE bid = (select bid
             FROM ZI 
             where x = (SELECT value from view_pos_x) and y = (SELECT value from view_pos_y)
     )
-;
+RETURNING *;
